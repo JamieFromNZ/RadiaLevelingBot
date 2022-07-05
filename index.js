@@ -100,7 +100,7 @@ client.once('ready', () => {
         options: [
             {
                 name: 'message',
-                description: 'msg',
+                description: 'msg, use {user} and {level}',
                 required: true,
                 type: 'STRING'
             },
@@ -148,6 +148,7 @@ client.on('guildCreate', (guild) => {
             xpRoles: undefined,
             lvlMsg: "**GG** {user}, you just advanced to Level **{level}**! <:radiaCheers:992673156877799467>",
             lbChannel: undefined,
+            lvlEmb: true,
         }
 
         configGuilds.set(guild.id, config);
@@ -166,12 +167,12 @@ client.on("messageCreate", async (message) => {
 
     // Ignore this, for another server
     var str = message.channel.id
-    if(Object.values(lvls).indexOf(str) > -1) {
+    if (Object.values(lvls).indexOf(str) > -1) {
         console.log("msg is in channel");
 
         let channelName = message.channel.name;
-        console.log("Channel name is " +  channelName);
-        if(channelName.length === 6) {
+        console.log("Channel name is " + channelName);
+        if (channelName.length === 6) {
             message.member.roles.add('993661744599801906');
             console.log("Added role");
             return;
@@ -198,6 +199,7 @@ client.on("messageCreate", async (message) => {
             xpRoles: undefined,
             lvlMsg: "**GG** {user}, you just advanced to Level **{level}**! <:radiaCheers:992673156877799467>",
             lbChannel: undefined,
+            lvlEmb: true,
         }
 
         configGuilds.set(message.guild.id, config);
@@ -226,13 +228,20 @@ client.on("messageCreate", async (message) => {
         guildMemberMap[message.member.id] = memberData;
 
         message.react("<a:2364_Party_Cat:949944665661116416>");
-        const emb = new MessageEmbed()
-            .setDescription("<:radiaLevelUp:992671785755611166> " + config.lvlMsg.toString()
+        if (config.lvlEmb === true) {
+            const emb = new MessageEmbed()
+                .setDescription("<:radiaLevelUp:992671785755611166> " + config.lvlMsg.toString()
+                    .replace("{user}", "<@" + message.member.id + ">")
+                    .replace("{level}", memberData.level)
+                )
+                .setColor("2f3136");
+            message.channel.send({ embeds: [emb] });
+        } else {
+            message.channel.send("<:radiaLevelUp:992671785755611166> " + config.lvlMsg.toString()
                 .replace("{user}", "<@" + message.member.id + ">")
                 .replace("{level}", memberData.level)
             )
-            .setColor("2f3136");
-        message.channel.send({ embeds: [emb] });
+        }
     }
 
     console.log("XP for " + message.member.user.username + " is now " + memberData.xp);
@@ -307,7 +316,7 @@ async function doCommand(interaction) {
                             label: 'Configure level-up message',
                             description: 'Set the message displayed whenever a user levels up',
                             value: 'level_message',
-                            },
+                        },
                         {
                             label: 'Configure level leaderboard channel',
                             description: 'Set the channel where you want to display the level leaderboard',
@@ -337,6 +346,7 @@ async function doCommand(interaction) {
                 xpRoles: undefined,
                 lvlMsg: "**GG** {user}, you just advanced to Level **{level}**! <:radiaCheers:992673156877799467>",
                 lbChannel: undefined,
+                lvlEmb: true,
             }
             configGuilds.set(interaction.guild.id, config);
         }
@@ -417,6 +427,7 @@ async function doCommand(interaction) {
                 xpRoles: undefined,
                 lvlMsg: "**GG** {user}, you just advanced to Level **{level}**! <:radiaCheers:992673156877799467>",
                 lbChannel: undefined,
+                lvlEmb: true,
             }
             configGuilds.set(interaction.guild.id, config);
         }
@@ -448,6 +459,7 @@ async function doCommand(interaction) {
                 xpRoles: undefined,
                 lvlMsg: "**GG** {user}, you just advanced to Level **{level}**! <:radiaCheers:992673156877799467>",
                 lbChannel: undefined,
+                lvlEmb: true,
             }
             configGuilds.set(interaction.guild.id, config);
         }
@@ -479,21 +491,29 @@ async function doCommand(interaction) {
                 xpRoles: undefined,
                 lvlMsg: "**GG** {user}, you just advanced to Level **{level}**! <:radiaCheers:992673156877799467>",
                 lbChannel: undefined,
+                lvlEmb: true,
             }
             configGuilds.set(interaction.guild.id, config);
         }
+
+        console.log("Fetching ze messahge");
+        let msg = interaction.options.getString('message');
+        let embed = interaction.options.getBoolean('embed');
+        console.log("Msg fetched, setting the message to ze config thingy");
+        config.lvlMsg = msg;
+        console.log("Embed also fetched a while ago, I'll set it now...");
+        config.lvlEmb = embed;
+        console.log("Done the setting thing, saving...");
+        configGuilds.set(interaction.guild.id, config);
+        console.log("Saved, sending embedddd");
+
+        const emb = new MessageEmbed()
+            .setDescription("<:radiaPoint:992572519175426099> Successfully set this server's level up message to `" + msg + "`, embed= " + embed)
+            .setColor(3092790)
+        interaction.reply({ embeds: [emb] }); // WEEEEEeeeeeeeeeeeeeeeeeEEeE
     }
 
     if (commandName === 'seelevelmsg') {
-        // Checking for permissions
-        if (!interaction.member.permissions.has(Permissions.FLAGS.ADMINISTRATOR)) {
-            const emb = new MessageEmbed()
-                .setDescription("<:radiaCross:993394500099641475> You require `ADMINISTRATOR` permissions to issue this command.")
-                .setColor("#36393f")
-            interaction.reply({ embeds: [emb] });
-            return;
-        }
-
         // Setting config and checking if it exists
         if (!config) {
             config = {
@@ -501,9 +521,15 @@ async function doCommand(interaction) {
                 xpRoles: undefined,
                 lvlMsg: "**GG** {user}, you just advanced to Level **{level}**! <:radiaCheers:992673156877799467>",
                 lbChannel: undefined,
+                lvlEmb: true,
             }
             configGuilds.set(interaction.guild.id, config);
         }
+
+        const emb = new MessageEmbed()
+            .setDescription("<:radiaPoint:992572519175426099> This server's level up message is `" + config.lvlMsg + "`")
+            .setColor(3092790)
+        interaction.reply({ embeds: [emb] });
     }
 }
 
