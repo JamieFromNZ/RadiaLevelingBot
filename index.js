@@ -17,6 +17,11 @@ const config = require('./config.json');
 const mapOfGuilds = [];
 const configGuilds = new Map();
 
+
+
+
+
+
 const lvls = {
     lvl1: '993618696364888246',
     lvl2: '993618715394457650',
