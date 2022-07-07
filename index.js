@@ -15,36 +15,26 @@ const { SlashCommandBuilder } = require('@discordjs/builders');
 const config = require('./config.json');
 
 const mapOfGuilds = [];
-const configGuilds = new Map();
-
-
-
-
-
-
-const lvls = {
-    lvl1: '993618696364888246',
-    lvl2: '993618715394457650',
-    lvl3: '993618730179379202',
-    lvl4: '993618745488588810',
-    lvl5: '993618760235765851',
-    lvl6: '993618774563487765',
-    lvl7: '993618789176451203',
-    lvl8: '993618806427619398',
-    lvl9: '993618820952498337',
-    lvl10: '993618839415824534',
-    lvl11: '993618855589060648',
-    lvl12: '993618870076178522',
-    lvl13: '993618884064186469',
-    lvl14: '993618897297223813',
-    lvl15: '993618912765825104',
-    lvl16: '993618927496204338',
-    lvl17: '993618943698813069',
-    lvl18: '993618960085962802',
-    lvl19: '993618974849908736',
-    lvl20: '993618994445680680',
-
+const configGuilds = new Map()
+const xpReqlvls = {
+    lvl1: 100,
+    lvl2: 145,
 }
+
+function addLvl(currentLvlXP, level) {
+    let lastLvl = xpReqlvls[Object.keys(xpReqlvls).pop()]
+    let nextLvlXP = lastLvl * 1.45;
+    console.log(nextLvlXP); // NaN
+    console.log("Next level XP is " + nextLvlXP + " We got this by multiplying " + lastLvl + " and 1.45");
+    let key = "lvl" + level;
+    console.log("Key is " + key);
+    xpReqlvls[key] = nextLvlXP;
+    console.log("Set " + key + " to " + nextLvlXP);
+    console.log("XPreq for lvl3 is " + xpReqlvls[key]);
+    console.log("-----")
+    return nextLvlXP;
+}
+
 
 client.once('ready', () => {
     console.log('logged in!');
@@ -153,7 +143,7 @@ client.on('guildCreate', (guild) => {
             xpRoles: undefined,
             lvlMsg: "**GG** {user}, you just advanced to Level **{level}**! <:radiaCheers:992673156877799467>",
             lbChannel: undefined,
-            lvlEmb: true,
+            lvlEmb: true
         }
 
         configGuilds.set(guild.id, config);
@@ -161,41 +151,9 @@ client.on('guildCreate', (guild) => {
 });
 
 client.on("messageCreate", async (message) => {
-    if (message.channel.id === '970603456731701278') {
-        if (message.author.bot) return;
-        message.channel.send("\:bread\:");
-    }
-
     if (!message.guild) return;
     if (message.author.bot) return;
     console.log("Message created!");
-
-    // Ignore this, for another server
-    var str = message.channel.id
-    if (Object.values(lvls).indexOf(str) > -1) {
-        console.log("msg is in channel");
-
-        let channelName = message.channel.name;
-        console.log("Channel name is " + channelName);
-        if (channelName.length === 6) {
-            message.member.roles.add('993661744599801906');
-            console.log("Added role");
-            return;
-        }
-
-        let levelStr = channelName.substr(channelName.length - 1);
-        let levelNo = parseInt(levelStr, 10);
-        let nextlevel = levelNo + 1;
-        let role = message.guild.roles.cache.find(r => r.name == "lvl " + levelStr);
-        let nextrole = message.guild.roles.cache.find(r => r.name == "lvl " + nextlevel);
-        console.log("Role ID is " + role);
-        message.member.roles.add(nextrole)
-        message.member.roles.remove(role);
-        message.delete();
-
-        return;
-    }
-    // ---------------
 
     var config = configGuilds.get(message.guild.id);
     if (!config) {
@@ -204,9 +162,8 @@ client.on("messageCreate", async (message) => {
             xpRoles: undefined,
             lvlMsg: "**GG** {user}, you just advanced to Level **{level}**! <:radiaCheers:992673156877799467>",
             lbChannel: undefined,
-            lvlEmb: true,
+            lvlEmb: true
         }
-
         configGuilds.set(message.guild.id, config);
     }
 
@@ -269,7 +226,22 @@ function isLevelledUp(guildId, memberId) {
     var guildData = getGuildXpMap(guildId);
     var memberData = guildData[memberId];
 
-    var xpRequired = memberData.level * 100;
+    var level = memberData.level.toString();
+    var key = "lvl" + level;
+    console.log(
+        "Key is " + key
+    );
+
+    var xpRequired = xpReqlvls[key];
+    console.log(xpRequired);
+
+    if ( !xpRequired ) {
+        addLvl(xpRequired, memberData.level); // OHHH 
+    }
+    var xpRequired = xpReqlvls[key];
+    console.log(
+        "XPReq is " + xpRequired
+    );
 
     if (xpRequired <= memberData.xp) {
         console.log("levelled up yay");
@@ -326,7 +298,7 @@ async function doCommand(interaction) {
                             label: 'Configure level leaderboard channel',
                             description: 'Set the channel where you want to display the level leaderboard',
                             value: 'leaderboard_channel',
-                        },
+                        }
                     ]),
             );
 
@@ -351,7 +323,7 @@ async function doCommand(interaction) {
                 xpRoles: undefined,
                 lvlMsg: "**GG** {user}, you just advanced to Level **{level}**! <:radiaCheers:992673156877799467>",
                 lbChannel: undefined,
-                lvlEmb: true,
+                lvlEmb: true
             }
             configGuilds.set(interaction.guild.id, config);
         }
@@ -432,7 +404,7 @@ async function doCommand(interaction) {
                 xpRoles: undefined,
                 lvlMsg: "**GG** {user}, you just advanced to Level **{level}**! <:radiaCheers:992673156877799467>",
                 lbChannel: undefined,
-                lvlEmb: true,
+                lvlEmb: true
             }
             configGuilds.set(interaction.guild.id, config);
         }
@@ -464,7 +436,7 @@ async function doCommand(interaction) {
                 xpRoles: undefined,
                 lvlMsg: "**GG** {user}, you just advanced to Level **{level}**! <:radiaCheers:992673156877799467>",
                 lbChannel: undefined,
-                lvlEmb: true,
+                lvlEmb: true
             }
             configGuilds.set(interaction.guild.id, config);
         }
@@ -496,7 +468,7 @@ async function doCommand(interaction) {
                 xpRoles: undefined,
                 lvlMsg: "**GG** {user}, you just advanced to Level **{level}**! <:radiaCheers:992673156877799467>",
                 lbChannel: undefined,
-                lvlEmb: true,
+                lvlEmb: true
             }
             configGuilds.set(interaction.guild.id, config);
         }
@@ -526,7 +498,7 @@ async function doCommand(interaction) {
                 xpRoles: undefined,
                 lvlMsg: "**GG** {user}, you just advanced to Level **{level}**! <:radiaCheers:992673156877799467>",
                 lbChannel: undefined,
-                lvlEmb: true,
+                lvlEmb: true
             }
             configGuilds.set(interaction.guild.id, config);
         }
